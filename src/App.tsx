@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import {
   createGreenApiClient,
@@ -14,6 +14,7 @@ import type { ChatModel } from './types/chat';
 import type { Message } from './types/message';
 
 import './App.css';
+import useMessages from './hooks/useMessages';
 
 function App() {
   const [client, setClient] = useState<GreenApiClient | null>(null);
@@ -98,96 +99,31 @@ function App() {
     }
   }
 
-  useEffect(() => {
-    if (!client || !chat) {
-      return;
-    }
-
-    let isActive = true;
-
-    async function receiveMessages() {
-      while (isActive) {
-        try {
-          const notification =
-            await client?.receiveNotification(5);
-
-          if (!isActive) {
-            break;
-          }
-
-          if (!notification) {
-            continue;
-          }
-
-          const { receiptId, body } = notification;
-
-          try {
-            const isIncomingText =
-              body.typeWebhook ===
-                'incomingMessageReceived' &&
-              body.senderData?.chatId === chat?.chatId &&
-              body.messageData?.typeMessage ===
-                'textMessage';
-
-            const message =
-              body.messageData?.textMessageData
-                ?.textMessage;
-
-            if (
-              isIncomingText &&
-              message?.trim()
-            ) {
-              const messageId =
-                body.idMessage ??
-                String(receiptId);
-
-              setMessages((previousMessages) => {
-                if (
-                  previousMessages.some(
-                    (message) =>
-                      message.id === messageId,
-                  )
-                ) {
-                  return previousMessages;
-                }
-
-                return [
-                  ...previousMessages,
-                  {
-                    id: messageId,
-                    message,
-                    direction: 'incoming',
-                  },
-                ];
-              });
-            }
-          } finally {
-            await client?.deleteNotification(
-              receiptId,
-            );
-          }} catch (error) {
-          if (!isActive) {
-            break;
-          }
-
-          console.error(
-            'Ошибка получения сообщения:',
-            error,
-          );
-
-          await new Promise((resolve) =>
-            setTimeout(resolve, 1500),
-          );
-        }
+  const handleIncomingMessage = useCallback(
+  (message: Message) => {
+    setMessages((previousMessages) => {
+      if (
+        previousMessages.some(
+          (item) => item.id === message.id,
+        )
+      ) {
+        return previousMessages;
       }
-    }
 
-    void receiveMessages();
+      return [
+        ...previousMessages,
+        message,
+      ];
+    });
+  },
+  [],
+);
 
-    return () => {
-      isActive = false;
-    };
-  }, [client, chat]);
+  useMessages({
+    client,
+    chatId: chat?.chatId ?? null,
+    onMessage: handleIncomingMessage,
+  })
 
   return (
     <main className='app'>

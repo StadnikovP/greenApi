@@ -16,7 +16,7 @@ export interface CheckAccountResponse {
   reason?: string;
 }
 
-export interface checkAccount {
+export interface CheckAccountRequest {
   phoneNumber: number;
   force?: boolean;
 }

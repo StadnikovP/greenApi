@@ -1,4 +1,4 @@
-import type { checkAccount, CheckAccountResponse, ContactInfoResponse, DeleteNotificationResponse, GreenApiCredentials, ReceiveNotificationResponse, SendMessageRequest, SendMessageResponse, StateInstanceResponse } from './types';
+import type { CheckAccountRequest, CheckAccountResponse, ContactInfoResponse, DeleteNotificationResponse, GreenApiCredentials, ReceiveNotificationResponse, SendMessageRequest, SendMessageResponse, StateInstanceResponse } from './types';
 
 class GreenApiError extends Error {
   constructor(
@@ -8,7 +8,6 @@ class GreenApiError extends Error {
     super(message);
     this.name = 'GreenApiError';
     console.log('status =', status);
-    
   }
 }
 
@@ -95,7 +94,7 @@ export class GreenApiClient {
     return this.request<StateInstanceResponse>('getStateInstance');
   }
 
-  checkAccount({ phoneNumber, force = false, }: checkAccount) {
+  checkAccount({ phoneNumber, force = false, }: CheckAccountRequest) {
     return this.request<CheckAccountResponse>('checkAccount', {
       httpMethod: 'POST',
       body: {
