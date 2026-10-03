@@ -74,3 +74,18 @@ export interface DeleteNotificationResponse {
   result: boolean;
   reason: string;
 }
+
+export interface IncomingMessageNotification {
+  typeWebhook: string;
+  idMessage: string;
+  timestamp: number;
+  senderData: {
+    chatId: string;
+  };
+  messageData: {
+    typeMessage: string;
+    textMessageData?: {
+      textMessage: string;
+    };
+  };
+}

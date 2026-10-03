@@ -1,9 +1,4 @@
-import { baseUrl } from './constants';
 import type { checkAccount, CheckAccountResponse, ContactInfoResponse, DeleteNotificationResponse, GreenApiCredentials, ReceiveNotificationResponse, SendMessageRequest, SendMessageResponse, StateInstanceResponse } from './types';
-
-const apiTokenInstance = import.meta.env.VITE_GREEN_API_TOKEN_INSTANCE;
-
-
 
 class GreenApiError extends Error {
   constructor(
@@ -42,6 +37,7 @@ export class GreenApiClient {
         httpMethod?: 'GET' | 'POST' | 'DELETE';
         body?: unknown;
         query?: Record<string, string | number | undefined>;
+        pathSuffix?: string;
       },
     ): Promise<T> {
     const {
@@ -51,7 +47,7 @@ export class GreenApiClient {
     } = options ?? {};
 
     const url = new URL(
-      `${baseUrl}/${method}/${apiTokenInstance}`,
+      `${this.apiUrl}/waInstance${this.idInstance}/${method}/${this.apiTokenInstance}${options?.pathSuffix ? `/${options.pathSuffix}` : ''}`
     );
 
     if (query) {
@@ -142,8 +138,9 @@ export class GreenApiClient {
   }
   
   deleteNotification(receiptId: number) {
-    return this.request<DeleteNotificationResponse>(`deleteNotification/${receiptId}`, {
+    return this.request<DeleteNotificationResponse>(`deleteNotification`, {
       httpMethod: 'DELETE',
+      pathSuffix: String(receiptId)
     });
   }
 }
@@ -157,114 +154,3 @@ export function createGreenApiClient(credentials?: GreenApiCredentials): GreenAp
 
   return new GreenApiClient(resolvedCredentials);
 }
-
-// async function request<T>(
-//   method: string,
-//   options?: {
-//     httpMethod?: 'GET' | 'POST' | 'DELETE';
-//     body?: unknown;
-//     query?: Record<string, string | number | undefined>;
-//   },
-// ): Promise<T> {
-//   const {
-//     httpMethod = 'GET',
-//     body,
-//     query,
-//   } = options ?? {};
-
-//   const url = new URL(
-//     `${baseUrl}/${method}/${apiTokenInstance}`,
-//   );
-
-//   if (query) {
-//     Object.entries(query).forEach(([key, value]) => {
-//       if (value !== undefined) {
-//         url.searchParams.set(key, String(value));
-//       }
-//     });
-//   }
-
-//   const response = await fetch(url, {
-//     method: httpMethod,
-//     headers: body
-//       ? {
-//         'Content-Type': 'application/json',
-//       }
-//       : undefined,
-//     body: body ? JSON.stringify(body) : undefined,
-//   });
-
-//   const text = await response.text();
-
-//   let data: unknown;
-
-//   try {
-//     data = text ? JSON.parse(text) : undefined;
-//   } catch {
-//     throw new GreenApiError(
-//       'GREEN-API returned invalid JSON',
-//       response.status,
-//     );
-//   }
-
-//   if (!response.ok) {
-//     throw new GreenApiError(
-//       `GREEN-API request failed: ${response.status}`,
-//       response.status,
-//     );
-//   }
-
-//   return data as T;
-// }
-
-// export function getStatusInstance() {
-//   return request<StateInstanceResponse>('getStateInstance');
-// }
-
-// export async function checkAccount({ phoneNumber, force = false, }: checkAccount) {
-//   return request<CheckAccountResponse>('checkAccount', {
-//     httpMethod: 'POST',
-//     body: {
-//       phoneNumber,
-//       force,
-//     }
-//   });
-// }
-
-// export function getContactInfo(chatId: string) {
-//   return request<ContactInfoResponse>('getContactInfo', {
-//     httpMethod: 'POST',
-//     body: {
-//       chatId
-//     }
-//   });
-// }
-
-// export function sendMessage({ chatId, message }: SendMessageRequest) {
-//   return request<SendMessageResponse>('sendMessage', {
-//     httpMethod: 'POST',
-//     body: {
-//       chatId,
-//       message,
-//     }
-//   });
-// }
-
-// export function receiveNotification(
-//   receiveTimeout = 10,
-// ) {
-//   return request<ReceiveNotificationResponse>(
-//     'receiveNotification',
-//     {
-//       query: {
-//         receiveTimeout,
-//       },
-//     },
-//   );
-// }
-
-// export function deleteNotification(receiptId: number) {
-//   return request<DeleteNotificationResponse>(`deleteNotification/${receiptId}`, {
-//     httpMethod: 'DELETE',
-//   });
-// }
