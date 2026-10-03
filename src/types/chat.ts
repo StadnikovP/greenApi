@@ -1,4 +1,4 @@
-export interface Chat {
+export interface ChatModel {
   chatId: string;
   phoneNumber: number;
   name: string;

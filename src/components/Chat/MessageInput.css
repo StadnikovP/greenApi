@@ -1,0 +1,58 @@
+.message-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.message-input__input {
+  flex: 1;
+
+  min-width: 0;
+  height: 44px;
+
+  padding: 0 14px;
+
+  border: 1px solid #d8dadd;
+  border-radius: 22px;
+
+  outline: none;
+
+  background: #f4f5f7;
+  color: #111111;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.message-input__input:focus {
+  border-color: #168cff;
+  box-shadow: 0 0 0 3px rgb(22 140 255 / 10%);
+}
+
+.message-input__button {
+  flex-shrink: 0;
+
+  width: 44px;
+  height: 44px;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: #168cff;
+  color: #ffffff;
+
+  font-size: 18px;
+
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.message-input__button:hover:not(:disabled) {
+  background: #087be8;
+}
+
+.message-input__button:disabled {
+  opacity: 0.4;
+}

@@ -1,5 +1,5 @@
 import { GreenApiClient } from '../api/greenApi';
-import type { Chat } from '../types/chat';
+import type { ChatModel } from '../types/chat';
 
 export function normalizePhoneNumber(value: string): string {
   return value.replace(/\D/g, '');
@@ -20,8 +20,8 @@ export function validatePhoneNumber(value: string): number {
 export async function createChat(
   client: GreenApiClient,
   phone: string,
-  existingChats: Chat[] = [],
-): Promise<Chat> {
+  existingChats: ChatModel[] = [],
+): Promise<ChatModel> {
   const phoneNumber = validatePhoneNumber(phone);
 
   const account = await client.checkAccount({phoneNumber});

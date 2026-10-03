@@ -5,19 +5,20 @@ import {
   type GreenApiClient,
 } from './api/greenApi';
 
-import { createChat } from './services/chatService';
-import type { Chat } from './types/chat';
+import Chat from './components/Chat/Chat';
+import NewChat from './components/NewChat/NewChat';
 
-interface SentMessage {
-  id: string;
-  message: string;
-  direction: 'incoming' | 'outgoing';
-}
+import { createChat } from './services/chatService';
+
+import type { ChatModel } from './types/chat';
+import type { Message } from './types/message';
+
+import './App.css';
 
 function App() {
   const [client, setClient] = useState<GreenApiClient | null>(null);
-  const [chat, setChat] = useState<Chat | null>(null);
-  const [messages, setMessages] = useState<SentMessage[]>([]);
+  const [chat, setChat] = useState<ChatModel | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const [phone, setPhone] = useState('');
   const [messageText, setMessageText] = useState('');
@@ -41,7 +42,10 @@ function App() {
         );
       }
 
-      const newChat = await createChat(greenApiClient, phone);
+      const newChat = await createChat(
+        greenApiClient,
+        phone,
+      );
 
       setClient(greenApiClient);
       setChat(newChat);
@@ -62,20 +66,23 @@ function App() {
     }
 
     const message = messageText.trim();
+    const chatId = chat.chatId;
 
     setError('');
     setIsSending(true);
-    const chatId = chat.chatId;
 
     try {
-      const response = await client.sendMessage({chatId, message});
+      const response = await client.sendMessage({
+        chatId,
+        message,
+      });
 
       setMessages((previousMessages) => [
         ...previousMessages,
         {
           id: response.idMessage,
           message,
-          direction: 'outgoing'
+          direction: 'outgoing',
         },
       ]);
 
@@ -101,7 +108,8 @@ function App() {
     async function receiveMessages() {
       while (isActive) {
         try {
-          const notification = await client!.receiveNotification(5);
+          const notification =
+            await client?.receiveNotification(5);
 
           if (!isActive) {
             break;
@@ -115,20 +123,29 @@ function App() {
 
           try {
             const isIncomingText =
-              body.typeWebhook === 'incomingMessageReceived' &&
-              body.senderData?.chatId === chat!.chatId &&
-              body.messageData?.typeMessage === 'textMessage';
+              body.typeWebhook ===
+                'incomingMessageReceived' &&
+              body.senderData?.chatId === chat?.chatId &&
+              body.messageData?.typeMessage ===
+                'textMessage';
 
             const message =
-              body.messageData?.textMessageData?.textMessage;
+              body.messageData?.textMessageData
+                ?.textMessage;
 
-            if (isIncomingText && message?.trim()) {
-              const messageId = body.idMessage ?? String(receiptId);
+            if (
+              isIncomingText &&
+              message?.trim()
+            ) {
+              const messageId =
+                body.idMessage ??
+                String(receiptId);
 
               setMessages((previousMessages) => {
                 if (
                   previousMessages.some(
-                    (message) => message.id === messageId,
+                    (message) =>
+                      message.id === messageId,
                   )
                 ) {
                   return previousMessages;
@@ -139,22 +156,28 @@ function App() {
                   {
                     id: messageId,
                     message,
-                    direction: 'incoming'
+                    direction: 'incoming',
                   },
                 ];
               });
             }
           } finally {
-            await client!.deleteNotification(receiptId);
-          }
-        } catch (error) {
+            await client?.deleteNotification(
+              receiptId,
+            );
+          }} catch (error) {
           if (!isActive) {
             break;
           }
 
-          console.error('Ошибка получения сообщения:', error);
+          console.error(
+            'Ошибка получения сообщения:',
+            error,
+          );
 
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1500),
+          );
         }
       }
     }
@@ -164,91 +187,40 @@ function App() {
     return () => {
       isActive = false;
     };
-
   }, [client, chat]);
 
   return (
-    <main>
-      <h1>MAX Messenger</h1>
+    <main className='app'>
+      <div className='app__container'>
+        <h1 className='app__title'>MAX Messenger</h1>
 
-      {!chat && (
-        <section>
-          <h2>Новый чат</h2>
+        {!chat && (
+          <NewChat
+            phone={phone}
+            isLoading={isLoading}
+            onPhoneChange={setPhone}
+            onSubmit={handleCreateChat}
+          />
+        )}
 
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void handleCreateChat();
-            }}
-          >
-            <label htmlFor="phone">Номер телефона</label>
+        {chat && (
+          <Chat
+            chat={chat}
+            messages={messages}
+            messageText={messageText}
+            isSending={isSending}
+            onMessageChange={setMessageText}
+            onSendMessage={handleSendMessage}
+          />
+        )}
 
-            <input
-              id="phone"
-              type="tel"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              placeholder="79991234567"
-              disabled={isLoading}
-            />
+        {error && (
+          <p className='app_error' role="alert">
+            {error}
+          </p>
+        )}
 
-            <button
-              type="submit"
-              disabled={isLoading || !phone.trim()}
-            >
-              {isLoading ? 'Создание...' : 'Создать чат'}
-            </button>
-          </form>
-        </section>
-      )}
-
-      {chat && (
-        <section>
-          <header>
-            <h2>{chat.phoneNumber}</h2>
-          </header>
-
-          <div aria-live="polite">
-            {messages.length === 0 ? (
-              <p>Сообщений пока нет</p>
-            ) : (
-              messages.map((item) => (
-                <div key={item.id} className={`message message--${item.direction}`}>
-                  <div className='message__text'>
-                    {item.message}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void handleSendMessage();
-            }}
-          >
-            <label htmlFor="message">Сообщение</label>
-
-            <input
-              id="message"
-              type="text"
-              value={messageText}
-              onChange={(event) => setMessageText(event.target.value)}
-              placeholder="Введите сообщение..."
-              disabled={isSending}
-            />
-
-            <button
-              type="submit"
-              disabled={isSending || !messageText.trim()}
-            >{isSending ? 'Отправка...' : 'Отправить'}
-            </button>
-          </form>
-        </section>
-      )}
-
-      {error && <p role="alert">{error}</p>}
+      </div>
     </main>
   );
 }
