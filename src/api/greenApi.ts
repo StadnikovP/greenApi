@@ -144,12 +144,12 @@ export class GreenApiClient {
   }
 }
 
-export function createGreenApiClient(credentials?: GreenApiCredentials): GreenApiClient {
-  const resolvedCredentials = credentials ?? {
-    apiUrl: import.meta.env.VITE_GREEN_API_URL ?? '',
-    idInstance: import.meta.env.VITE_GREEN_API_ID_INSTANCE ?? '',
-    apiTokenInstance: import.meta.env.VITE_GREEN_API_TOKEN_INSTANCE ?? ''
-  };
+export function createGreenApiClient(credentials: GreenApiCredentials): GreenApiClient {
+  // const resolvedCredentials = credentials ?? {
+  //   apiUrl: import.meta.env.VITE_GREEN_API_URL ?? '',
+  //   idInstance: import.meta.env.VITE_GREEN_API_ID_INSTANCE ?? '',
+  //   apiTokenInstance: import.meta.env.VITE_GREEN_API_TOKEN_INSTANCE ?? ''
+  // };
 
-  return new GreenApiClient(resolvedCredentials);
+  return new GreenApiClient(credentials);
 }
