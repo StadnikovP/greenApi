@@ -1,75 +1,261 @@
-# React + TypeScript + Vite
+# MAX Messenger
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Тестовое задание — веб-мессенджер на React + TypeScript с интеграцией с GREEN-API для работы с MAX.
 
-Currently, two official plugins are available:
+## Стек
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+* React
+* TypeScript
+* Vite
+* CSS
+* GREEN-API
+* Vitest
+* React Testing Library
 
-## React Compiler
+## Возможности
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* Создание чата по номеру телефона.
+* Проверка существования аккаунта MAX.
+* Получение имени контакта.
+* Отправка текстовых сообщений.
+* Получение входящих текстовых сообщений.
+* Автоматический polling входящих сообщений.
+* Дедупликация сообщений.
+* Обработка ошибок API.
+* Состояния загрузки.
+* Адаптивный интерфейс.
+* Базовая accessibility-поддержка.
 
-## Expanding the ESLint configuration
+Поддерживаются номера телефонов России и Беларуси.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Архитектура
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```text
+src/
+├── api/
+│   ├── greenApi.ts
+│   └── types.ts
+│
+├── components/
+│   ├── Chat/
+│   ├── GreenApiCredentialsForm/
+│   └── NewChat/
+│
+├── config/
+│   ├── greenApiConfig.ts
+│
+├── hooks/
+│   └── useMessages.ts
+│
+├── services/
+│   └── chatService.ts
+│
+├── types/
+│   ├── chat.ts
+│   └── message.ts
+│
+├── utils/
+│   └── parseIncomingMessage.ts
+│
+├── test/
+│   └── setup.ts
+│
+├── App.tsx
+└── main.tsx
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+### API
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+`GreenApiClient` инкапсулирует взаимодействие с GREEN-API:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+* проверка состояния инстанса;
+* проверка существования аккаунта;
+* получение информации о контакте;
+* отправка сообщения;
+* получение notification;
+* удаление обработанной notification.
 
+### Service
+
+`chatService` содержит бизнес-логику создания чата:
+
+* нормализация номера;
+* валидация номера;
+* проверка аккаунта;
+* получение имени контакта;
+* предотвращение создания дубликатов.
+
+### Hook
+
+`useMessages` отвечает за polling входящих сообщений и управление его lifecycle.
+
+### Utils
+
+`parseIncomingMessage` преобразует notification GREEN-API во внутреннюю модель сообщения и фильтрует неподходящие notification.
+
+## Требования
+
+* Node.js 18+
+* npm
+
+## Установка
+
+```bash
+npm install
 ```
+
+## Настройка
+
+Есть два варианта: 
+
+### Первый для локальной разработки
+
+Создайте файл `.env.local` в корне проекта:
+
+```env
+VITE_GREEN_API_URL=https://7103.api.greenapi.com
+VITE_GREEN_API_ID_INSTANCE=your_id_instance
+VITE_GREEN_API_TOKEN_INSTANCE=your_api_token_instance
+```
+
+Укажите реальные значения `idInstance` и `apiTokenInstance` из GREEN-API.
+
+`.env.local` не должен попадать в репозиторий.
+
+### Для просмотри из веба ввод через интерфейс
+
+Форма показывается если не находит данных в файле `.env.local`
+
+## Запуск
+
+Запуск dev-сервера:
+
+```bash
+npm run dev
+```
+
+Production build:
+
+```bash
+npm run build
+```
+
+Предпросмотр production-сборки:
+
+```bash
+npm run preview
+```
+
+## Тесты
+
+Запуск тестов в watch-режиме:
+
+```bash
+npm test
+```
+
+Однократный запуск всех тестов:
+
+```bash
+npm run test:run
+```
+
+Для тестирования используются Vitest и React Testing Library.
+
+Покрыты основные бизнес-сценарии:
+
+* обработка входящих сообщений;
+* фильтрация notification;
+* нормализация и валидация номера телефона;
+* создание чата;
+* обработка ошибок API;
+* предотвращение создания дубликатов;
+* обработка отсутствия информации о контакте.
+
+## Как работает приложение
+
+### Подключение GREEN-API
+
+При запуске приложение проверяет наличие credentials в переменных окружения.
+
+```text
+                         Запуск приложения
+                                │
+                                ▼
+                    Проверка переменных окружения в `.env.local`
+                                │
+                         Credentials есть?
+                         ┌───────┴───────┐
+                        Да               Нет
+                        │                 │
+                        ▼                 ▼
+                getEnvCredentials    Форма подключения
+                        │                 │
+                        │           Ввод credentials
+                        │                 │
+                        └────────┬────────┘
+                                 │
+                                 ▼
+                       GreenApiCredentials
+                                 │
+                                 ▼
+                    createGreenApiClient
+                                 │
+                                 ▼
+                       Работа с GREEN-API
+```
+
+Если переменные окружения отсутствуют или указаны не полностью, credentials можно ввести через форму в интерфейсе.
+
+### Создание чата
+
+```text
+Номер телефона
+      ↓
+Нормализация и валидация
+      ↓
+Проверка аккаунта через GREEN-API
+      ↓
+┌─────┴─────┐
+Нет         Да
+↓            ↓
+Ошибка     Проверка существующего чата
+             ↓
+        Получение контакта
+             ↓
+          Новый чат
+```
+
+### Получение сообщений
+
+```text
+receiveNotification
+        ↓
+Получена notification
+        ↓
+parseIncomingMessage
+        ↓
+Подходит?
+   ┌────┴────┐
+  Нет        Да
+   ↓          ↓
+ skip      onMessage
+              ↓
+      deleteNotification
+```
+
+Входящие сообщения идентифицируются по `idMessage`.
+
+Перед добавлением сообщения в состояние выполняется дедупликация, поэтому одна notification не приводит к появлению нескольких одинаковых сообщений.
+
+## Ограничения
+
+Проект реализует минимальный сценарий мессенджера:
+
+* используется один чат;
+* списка чатов нет;
+* поддерживаются только текстовые сообщения;
+* отдельная загрузка истории сообщений не реализована;
+* новые сообщения получаются через polling GREEN-API.
+
+Архитектура намеренно остаётся простой: глобальное состояние и дополнительные state-management библиотеки не используются, поскольку для текущего объёма приложения они не дают существенных преимуществ.
